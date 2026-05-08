@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Career Personality Test</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f5f4f0;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem;
+    color: #1a1a1a;
+  }
+  .wrap { max-width: 660px; width: 100%; }
+
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+    padding: 2rem 2rem 1.75rem;
+  }
+
+  /* Progress */
+  .prog-outer {
+    height: 4px; background: #e8e6e0; border-radius: 99px;
+    overflow: hidden; margin-bottom: 2rem;
+  }
+  .prog-inner {
+    height: 100%; background: #2563eb; border-radius: 99px;
+    transition: width 0.4s ease; width: 0%;
+  }
+
+  /* Screen control */
+  .screen { display: none; }
+  .screen.on { display: block; }
+
+  /* Intro */
+  .intro-badge {
+    display: inline-block;
+    background: #eff6ff; color: #1d4ed8;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 99px;
+    margin-bottom: 1rem;
+  }
+  .intro-title { font-size: 26px; font-weight: 600; line-height: 1.3; margin-bottom: 0.75rem; }
+  .intro-sub { font-size: 15px; color: #555; line-height: 1.7; margin-bottom: 1.5rem; }
+  .dims-row {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1.75rem;
+  }
+  .dim-chip {
+    font-size: 12px; font-weight: 500;
+    padding: 4px 12px; border-radius: 99px;
+    border: 1px solid;
+  }
+
+  /* Question */
+  .q-section {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #888; margin-bottom: 0.5rem;
+  }
+  .q-counter { font-size: 13px; color: #999; margin-bottom: 0.5rem; }
+  .q-text { font-size: 19px; font-weight: 600; line-height: 1.45; margin-bottom: 1.5rem; }
+
+  .opts { display: grid; gap: 10px; }
+  .opt {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px;
+    background: #fff; border: 1px solid #e4e2db;
+    border-radius: 12px; cursor: pointer; text-align: left;
+    transition: border-color 0.15s, background 0.15s;
+    width: 100%;
+  }
+  .opt:hover { border-color: #c0bdb5; background: #fafaf8; }
+  .opt.sel { border: 2px solid #2563eb; background: #eff6ff; }
+  .opt-l {
+    display: flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #f0ede8; font-size: 12px; font-weight: 600; color: #666;
+    flex-shrink: 0; margin-top: 1px; transition: background 0.15s, color 0.15s;
+  }
+  .opt.sel .opt-l { background: #2563eb; color: #fff; }
+  .opt-t { font-size: 14px; font-weight: 600; color: #1a1a1a; line-height: 1.4; }
+  .opt-d { font-size: 12px; color: #777; line-height: 1.5; margin-top: 2px; }
+
+  .nav {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 1.75rem;
+  }
+  .btn-ghost {
+    background: transparent; border: 1px solid #ddd; border-radius: 8px;
+    padding: 9px 20px; font-size: 14px; font-weight: 500; color: #666;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .btn-ghost:hover:not(:disabled) { background: #f5f4f0; }
+  .btn-ghost:disabled { opacity: 0.35; cursor: default; }
+  .btn-solid {
+    background: #1a1a1a; border: none; border-radius: 8px;
+    padding: 9px 24px; font-size: 14px; font-weight: 600; color: #fff;
+    cursor: pointer; transition: opacity 0.15s;
+  }
+  .btn-solid:disabled { opacity: 0.3; cursor: default; }
+  .btn-solid:hover:not(:disabled) { opacity: 0.85; }
+
+  /* Result */
+  .res-header { text-align: center; padding: 1rem 0 1.25rem; }
+  .res-icon { font-size: 44px; margin-bottom: 0.75rem; }
+  .res-title { font-size: 26px; font-weight: 700; margin-bottom: 0.3rem; }
+  .res-type { font-size: 13px; color: #888; margin-bottom: 0.25rem; }
+  .res-desc {
+    font-size: 14px; color: #555; line-height: 1.75;
+    padding: 14px 16px; background: #f7f6f2;
+    border-radius: 10px; border-left: 3px solid #2563eb;
+    margin: 1.25rem 0;
+  }
+
+  .sec-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #888; margin-bottom: 0.85rem; margin-top: 1.5rem;
+  }
+
+  /* Trait bars */
+  .trait-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .trait-lbl { font-size: 12px; color: #666; width: 105px; flex-shrink: 0; }
+  .trait-out { flex: 1; height: 7px; background: #e8e6e0; border-radius: 99px; overflow: hidden; }
+  .trait-fill { height: 100%; border-radius: 99px; transition: width 1.1s ease 0.2s; }
+  .trait-pct { font-size: 12px; color: #888; width: 30px; text-align: right; }
+
+  /* Career cards */
+  .career-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+  .career-card {
+    background: #f7f6f2; border: 1px solid #e8e6e0;
+    border-radius: 12px; padding: 14px;
+  }
+  .c-ico { font-size: 20px; margin-bottom: 7px; }
+  .c-name { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 3px; }
+  .c-why { font-size: 11px; color: #777; line-height: 1.5; }
+
+  /* Secondary profiles */
+  .secondary-block {
+    background: #f7f6f2; border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 10px;
+  }
+  .sec-prof-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .sec-prof-sub { font-size: 12px; color: #777; line-height: 1.5; }
+
+  .res-actions { display: flex; gap: 10px; margin-top: 1.75rem; justify-content: center; flex-wrap: wrap; }
+  .btn-outline {
+    background: transparent; border: 1px solid #ddd; border-radius: 8px;
+    padding: 9px 20px; font-size: 14px; font-weight: 500; color: #444;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .btn-outline:hover { background: #f5f4f0; }
+
+  @media (max-width: 480px) {
+    .card { padding: 1.25rem; }
+    .intro-title, .res-title { font-size: 22px; }
+    .q-text { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="prog-outer"><div class="prog-inner" id="pb"></div></div>
+
+    <!-- INTRO -->
+    <div class="screen on" id="sIntro">
+      <div class="intro-badge">Career path assessment</div>
+      <h1 class="intro-title">What kind of work are you actually built for?</h1>
+      <p class="intro-sub">20 situational questions across 5 core dimensions. This isn't about job titles — it's about how you think, what energizes you, and where your impact is highest. Answer instinctively. Takes about 4 minutes.</p>
+      <div class="dims-row">
+        <span class="dim-chip" style="color:#1d4ed8;border-color:#bfdbfe;background:#eff6ff">🔬 Analytical</span>
+        <span class="dim-chip" style="color:#be185d;border-color:#fbcfe8;background:#fdf2f8">🎨 Creative</span>
+        <span class="dim-chip" style="color:#065f46;border-color:#a7f3d0;background:#ecfdf5">🤝 Social</span>
+        <span class="dim-chip" style="color:#4c1d95;border-color:#ddd6fe;background:#f5f3ff">📐 Structured</span>
+        <span class="dim-chip" style="color:#92400e;border-color:#fde68a;background:#fffbeb">🚀 Enterprising</span>
+      </div>
+      <button class="btn-solid" onclick="startTest()">Begin the test →</button>
+    </div>
+
+    <!-- QUESTION -->
+    <div class="screen" id="sQ">
+      <div class="q-section" id="qSec"></div>
+      <div class="q-counter" id="qCnt"></div>
+      <div class="q-text" id="qTxt"></div>
+      <div class="opts" id="qOpts"></div>
+      <div class="nav">
+        <button class="btn-ghost" id="bBack" onclick="goBack()">← Back</button>
+        <button class="btn-solid" id="bNext" onclick="goNext()" disabled>Next →</button>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="screen" id="sRes">
+      <div class="res-header">
+        <div class="res-icon" id="rIco"></div>
+        <div class="res-title" id="rTit"></div>
+        <div class="res-type" id="rTyp"></div>
+      </div>
+      <div class="res-desc" id="rDesc"></div>
+      <div class="sec-label">Your dimension profile</div>
+      <div id="tBars"></div>
+      <div class="sec-label">Best-fit careers</div>
+      <div class="career-grid" id="cCards"></div>
+      <div class="sec-label">Secondary strengths</div>
+      <div id="secProfs"></div>
+      <div class="res-actions">
+        <button class="btn-outline" onclick="retake()">↺ Retake test</button>
+        <button class="btn-solid" onclick="printRes()">Save as PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const Qs=[
+  {s:"Thinking style",t:"You join a new project with an unclear scope. Your instinct is to:",o:[
+    {l:"A",ti:"Break it into a detailed map",d:"Identify every dependency and build a structured plan first",sc:{structured:3,analytical:2}},
+    {l:"B",ti:"Pitch a bold vision first",d:"Propose an ambitious direction and figure out the details as you go",sc:{creative:3,enterprising:2}},
+    {l:"C",ti:"Talk to everyone involved",d:"Have individual conversations to understand each person's needs",sc:{social:3,analytical:1}},
+    {l:"D",ti:"Research analogous cases",d:"Find out how similar problems were solved and build from there",sc:{analytical:3,structured:1}}
+  ]},
+  {s:"Thinking style",t:"When you solve a problem, you feel most satisfied when:",o:[
+    {l:"A",ti:"You find a clean, elegant solution",d:"Everything fits together logically with no loose ends",sc:{analytical:3,structured:2}},
+    {l:"B",ti:"Something unexpected clicks",d:"You arrive at an answer nobody saw coming",sc:{creative:3,enterprising:1}},
+    {l:"C",ti:"Everyone agrees it's the right move",d:"Consensus is reached and the team feels aligned",sc:{social:3,structured:1}},
+    {l:"D",ti:"It creates visible momentum",d:"The solution unlocks real progress, fast",sc:{enterprising:3,creative:1}}
+  ]},
+  {s:"Work environment",t:"The kind of day that leaves you most energized looks like:",o:[
+    {l:"A",ti:"Deep focus on a hard problem",d:"No meetings, complex work, concrete progress",sc:{analytical:3,structured:1}},
+    {l:"B",ti:"Making something from nothing",d:"A blank canvas, creative freedom, tangible output",sc:{creative:3,enterprising:1}},
+    {l:"C",ti:"Back-to-back meaningful conversations",d:"Helping, connecting, collaborating with people all day",sc:{social:3,enterprising:1}},
+    {l:"D",ti:"Executing a tight plan perfectly",d:"Clear tasks, crisp delivery, everything on schedule",sc:{structured:3,analytical:1}}
+  ]},
+  {s:"Work environment",t:"Your ideal workspace looks like:",o:[
+    {l:"A",ti:"Quiet and data-rich",d:"Screens, spreadsheets, headphones — minimal distractions",sc:{analytical:3,structured:1}},
+    {l:"B",ti:"Open and stimulating",d:"Different people, visual chaos, lots of whiteboard space",sc:{creative:3,social:1}},
+    {l:"C",ti:"Social and warm",d:"Casual conversations, open doors, team energy",sc:{social:3,enterprising:1}},
+    {l:"D",ti:"Structured and organised",d:"Clear processes, documented workflows, predictable rhythms",sc:{structured:3,analytical:1}}
+  ]},
+  {s:"Risk & decisions",t:"You're offered a role with high upside but no job security. You:",o:[
+    {l:"A",ti:"Run a detailed risk analysis",d:"Model the scenarios, calculate expected outcomes, then decide",sc:{analytical:3,structured:1}},
+    {l:"B",ti:"Get excited by the potential",d:"The upside energizes you more than the risk concerns you",sc:{enterprising:3,creative:2}},
+    {l:"C",ti:"Ask people you trust",d:"Mentors and colleagues help you think it through",sc:{social:3,analytical:1}},
+    {l:"D",ti:"Negotiate for more security",d:"Try to reduce the downside before committing",sc:{structured:3,enterprising:1}}
+  ]},
+  {s:"Risk & decisions",t:"When you have to make a call with incomplete information, you tend to:",o:[
+    {l:"A",ti:"Delay until you have more data",d:"Bad decisions cost more than time — gather first",sc:{analytical:3,structured:2}},
+    {l:"B",ti:"Trust your pattern recognition",d:"You've seen enough situations to make a good bet",sc:{enterprising:3,creative:2}},
+    {l:"C",ti:"Crowdsource the decision",d:"Get input from different perspectives and find what resonates",sc:{social:3,structured:1}},
+    {l:"D",ti:"Use a framework or checklist",d:"Structured heuristics compensate for missing data",sc:{structured:3,analytical:2}}
+  ]},
+  {s:"People & communication",t:"You're most useful to a team when:",o:[
+    {l:"A",ti:"You're the person who found the flaw",d:"You catch what others miss and keep the work rigorous",sc:{analytical:3,structured:1}},
+    {l:"B",ti:"You reframe the problem entirely",d:"You change how the team sees the challenge",sc:{creative:3,enterprising:2}},
+    {l:"C",ti:"You unblock someone who was stuck",d:"Listening, coaching, or connecting people gets things moving",sc:{social:3,enterprising:1}},
+    {l:"D",ti:"You bring order to chaos",d:"You clarify priorities and make execution reliable",sc:{structured:3,analytical:1}}
+  ]},
+  {s:"People & communication",t:"In a heated team discussion, you're likely to:",o:[
+    {l:"A",ti:"Pull in data to resolve it",d:"Let evidence settle the disagreement",sc:{analytical:3,structured:1}},
+    {l:"B",ti:"Reframe the disagreement itself",d:"Question whether the debate is even about the right thing",sc:{creative:3,enterprising:1}},
+    {l:"C",ti:"Find the common ground",d:"Focus on what everyone agrees on and build from there",sc:{social:3,analytical:1}},
+    {l:"D",ti:"Identify who should decide",d:"Escalate clearly so the right person makes the call",sc:{structured:3,social:1}}
+  ]},
+  {s:"Motivation & reward",t:"The feedback that motivates you most is:",o:[
+    {l:"A",ti:"Your analysis was airtight",d:"Precision and quality of your reasoning",sc:{analytical:3,structured:1}},
+    {l:"B",ti:"That was a completely original idea",d:"Originality and novelty of your approach",sc:{creative:3,enterprising:1}},
+    {l:"C",ti:"You really helped that person grow",d:"Positive impact on the people around you",sc:{social:3,enterprising:1}},
+    {l:"D",ti:"You delivered exactly as promised",d:"Reliability and execution quality",sc:{structured:3,analytical:1}}
+  ]},
+  {s:"Motivation & reward",t:"In five years, you want to be known for:",o:[
+    {l:"A",ti:"Being one of the best in your domain",d:"Depth, expertise, and mastery in a specific field",sc:{analytical:3,structured:2}},
+    {l:"B",ti:"Creating something people love",d:"A product, brand, or creative output that matters",sc:{creative:3,enterprising:2}},
+    {l:"C",ti:"Developing the people around you",d:"Careers you shaped, teams you grew",sc:{social:3,enterprising:1}},
+    {l:"D",ti:"Building something that scales",d:"An organization, system, or business that outlasts you",sc:{enterprising:3,structured:2}}
+  ]},
+  {s:"Learning & growth",t:"You absorb new skills best by:",o:[
+    {l:"A",ti:"Reading and researching deeply",d:"Articles, books, documentation — understanding the theory first",sc:{analytical:3,structured:1}},
+    {l:"B",ti:"Experimenting and iterating fast",d:"Trying things, breaking them, seeing what happens",sc:{creative:3,enterprising:2}},
+    {l:"C",ti:"Learning from someone ahead of you",d:"Mentors, teachers, observing how masters work",sc:{social:3,structured:1}},
+    {l:"D",ti:"Taking a structured course",d:"Syllabus, progress tracking, clear milestones",sc:{structured:3,analytical:1}}
+  ]},
+  {s:"Learning & growth",t:"When you hit a wall in a project, you typically:",o:[
+    {l:"A",ti:"Dig deeper into first principles",d:"Go back to basics until the answer surfaces",sc:{analytical:3,structured:1}},
+    {l:"B",ti:"Try a wildly different approach",d:"Abandon the current path and explore an alternative",sc:{creative:3,enterprising:2}},
+    {l:"C",ti:"Phone a friend",d:"Find someone who's faced a similar challenge before",sc:{social:3,analytical:1}},
+    {l:"D",ti:"Rebuild your plan from scratch",d:"Revisit the structure and find where the logic broke",sc:{structured:3,analytical:2}}
+  ]},
+  {s:"Ownership & ambition",t:"Which would you find hardest to tolerate long-term?",o:[
+    {l:"A",ti:"Doing work without rigor",d:"Guesswork, no data, sloppy standards",sc:{analytical:3,structured:1}},
+    {l:"B",ti:"Doing the same thing repeatedly",d:"No novelty, no variation, no room to experiment",sc:{creative:3,enterprising:1}},
+    {l:"C",ti:"Working in isolation",d:"No team, no feedback, no human connection",sc:{social:3,enterprising:1}},
+    {l:"D",ti:"Working without a clear system",d:"Constant pivots, no accountability, no structure",sc:{structured:3,analytical:1}}
+  ]},
+  {s:"Ownership & ambition",t:"You take on a side project. After 3 months, it's working. You:",o:[
+    {l:"A",ti:"Start measuring and optimizing it",d:"Build dashboards, study the data, find what to improve",sc:{analytical:3,structured:2}},
+    {l:"B",ti:"Reinvent the whole thing",d:"Now that it works, explore what it could become",sc:{creative:3,enterprising:2}},
+    {l:"C",ti:"Invite others into it",d:"Grow the community, bring in collaborators",sc:{social:3,enterprising:1}},
+    {l:"D",ti:"Systematize and delegate",d:"Build a process so it runs without you",sc:{structured:3,enterprising:2}}
+  ]},
+  {s:"Impact & purpose",t:"The work that gives you the most meaning is work that:",o:[
+    {l:"A",ti:"Explains how something complex works",d:"Making the invisible visible and understandable",sc:{analytical:3,creative:1}},
+    {l:"B",ti:"Didn't exist before you made it",d:"Original creation — products, ideas, art, systems",sc:{creative:3,enterprising:2}},
+    {l:"C",ti:"Directly improves someone's life",d:"Tangible impact on a real person's wellbeing or growth",sc:{social:3,enterprising:1}},
+    {l:"D",ti:"Makes a system run better",d:"Efficiency, reliability, scale — improving how things work",sc:{structured:3,enterprising:1}}
+  ]},
+  {s:"Impact & purpose",t:"Which challenge would you most want to work on?",o:[
+    {l:"A",ti:"How does X actually work?",d:"Deep investigation into a poorly understood phenomenon",sc:{analytical:3,structured:1}},
+    {l:"B",ti:"What could X become?",d:"Reimagining an existing system from scratch",sc:{creative:3,enterprising:2}},
+    {l:"C",ti:"How do we help more people access X?",d:"Widening the reach and equity of something valuable",sc:{social:3,enterprising:1}},
+    {l:"D",ti:"How do we scale X without breaking it?",d:"Designing for growth, reliability, and governance",sc:{structured:3,enterprising:2}}
+  ]},
+  {s:"Pressure & pace",t:"Under serious pressure, you tend to:",o:[
+    {l:"A",ti:"Narrow your focus sharply",d:"Ignore everything except the single most important thing",sc:{analytical:3,structured:2}},
+    {l:"B",ti:"Find energy in the urgency",d:"Pressure activates you and improves your output",sc:{enterprising:3,creative:1}},
+    {l:"C",ti:"Lean on your network",d:"Pressure is easier to handle when you're not alone",sc:{social:3,enterprising:1}},
+    {l:"D",ti:"Fall back on your systems",d:"Pre-built routines and checklists carry you through",sc:{structured:3,analytical:1}}
+  ]},
+  {s:"Pressure & pace",t:"After a project ends, you reflect most on:",o:[
+    {l:"A",ti:"What the data showed you",d:"Patterns, surprises, things to study further",sc:{analytical:3,structured:1}},
+    {l:"B",ti:"What you created that didn't exist before",d:"The artifact, the output, the thing you built",sc:{creative:3,enterprising:1}},
+    {l:"C",ti:"How the team grew through it",d:"The relationships, difficult conversations, trust built",sc:{social:3,enterprising:1}},
+    {l:"D",ti:"What you'd run differently",d:"Process improvements, decision-making, lessons for next time",sc:{structured:3,analytical:2}}
+  ]},
+  {s:"Signature strength",t:"Which of these is closest to your signature strength?",o:[
+    {l:"A",ti:"You make complex things clear",d:"You can explain, model, or map almost anything",sc:{analytical:3,structured:2}},
+    {l:"B",ti:"You see what others don't",d:"Connections, possibilities, angles others miss",sc:{creative:3,enterprising:1}},
+    {l:"C",ti:"People trust and open up to you",d:"You create safety and draw out the best in others",sc:{social:3,enterprising:1}},
+    {l:"D",ti:"You make things happen on time",d:"You translate ambiguity into reliable execution",sc:{structured:3,analytical:1}}
+  ]},
+  {s:"Signature strength",t:"If you had to build something from scratch with no instructions, you'd:",o:[
+    {l:"A",ti:"Research everything first",d:"Understand the domain thoroughly before making a move",sc:{analytical:3,structured:2}},
+    {l:"B",ti:"Start making prototypes",d:"Build fast, fail fast, iterate toward something real",sc:{creative:3,enterprising:2}},
+    {l:"C",ti:"Find the right people first",d:"Build the team and let their strengths guide the direction",sc:{social:3,enterprising:2}},
+    {l:"D",ti:"Design the structure first",d:"Systems, roles, processes — get the foundation right",sc:{structured:3,analytical:1}}
+  ]}
+];
+
+const PROFS={
+  analytical:{ico:"🔬",tit:"The Analyst",typ:"Analytical · Investigative · Precise",
+  desc:"You thrive on understanding how things work at a deep level. You're most effective when given hard problems, real data, and room to think without interruption. You build trust through rigor — when you say something is true, people believe it. Your biggest growth edge is knowing when 'good enough' beats perfect, and translating your insights into language non-experts can act on.",
+  about:"Dominant in analytical thinking. You approach challenges systematically, prefer evidence over intuition, and are at your best with depth and complexity.",
+  careers:[
+    {i:"📊",n:"Data scientist",w:"Turning complex data into actionable insight"},
+    {i:"💹",n:"Quantitative analyst",w:"Building models that drive financial decisions"},
+    {i:"🧬",n:"Research scientist",w:"Systematic investigation in a focused domain"},
+    {i:"🔐",n:"Cybersecurity analyst",w:"Pattern recognition in adversarial systems"},
+    {i:"⚖️",n:"Policy analyst",w:"Evidence-based evaluation of real-world systems"},
+    {i:"🧠",n:"Clinical psychologist",w:"Rigorous assessment of human behavior"}
+  ]},
+  creative:{ico:"🎨",tit:"The Creator",typ:"Creative · Visionary · Original",
+  desc:"You make things that didn't exist before. Whether it's a product, a brand, a story, or a system, you see blank space as an invitation. You're at your best when given freedom, a hard constraint, and a reason it matters. Where others see limitations, you see creative problems. Your edge to develop: discipline — great creative output is as much structure as inspiration.",
+  about:"Dominant in creative thinking. You generate original ideas, reframe problems others see as fixed, and are energized by novelty and expression.",
+  careers:[
+    {i:"🖥️",n:"Product designer (UX/UI)",w:"Designing human experiences from scratch"},
+    {i:"📝",n:"Creative director",w:"Leading a vision across every touchpoint"},
+    {i:"🎬",n:"Film / content creator",w:"Storytelling through visual and audio media"},
+    {i:"🏛️",n:"Architect",w:"Form, function, and aesthetic at large scale"},
+    {i:"🧪",n:"R&D lead",w:"Inventing new products and processes"},
+    {i:"📚",n:"Author / narrative designer",w:"Building worlds through language and story"}
+  ]},
+  social:{ico:"🤝",tit:"The Connector",typ:"Social · Empathic · Relational",
+  desc:"You are the person others gravitate to, confide in, and build with. Your impact comes through people — you understand what they need before they say it, and you know how to build environments where they do their best work. You are most powerful at the intersection of human complexity and institutional ambition. Your growth edge: holding space for yourself as fiercely as you do for others.",
+  about:"Dominant in social intelligence. You lead through relationships, thrive in collaborative environments, and are a multiplier of others' performance.",
+  careers:[
+    {i:"🧑‍🏫",n:"Educator / coach",w:"Developing others is your core output"},
+    {i:"🏥",n:"Clinical social worker",w:"Navigating human systems to improve lives"},
+    {i:"👥",n:"HR / people ops lead",w:"Building the conditions for team excellence"},
+    {i:"🤲",n:"NGO / development director",w:"Scaling social impact through networks"},
+    {i:"🎙️",n:"Therapist / counselor",w:"Deep, trusted, transformative relationships"},
+    {i:"📢",n:"Community organizer",w:"Mobilizing people around shared purpose"}
+  ]},
+  structured:{ico:"📐",tit:"The Architect",typ:"Structured · Reliable · Systematic",
+  desc:"You are the person who makes everything else possible. Where others create ambiguity, you create clarity. You build the systems, processes, and operating rhythms that let organizations scale. You're trusted with the hardest execution challenges — because you deliver. Your edge to develop: comfort with the uncertainty of early-stage environments where the structure has to be invented, not followed.",
+  about:"Dominant in structured thinking. You translate chaos into systems, excel at execution, and build reliability that organizations depend on.",
+  careers:[
+    {i:"⚙️",n:"Operations manager",w:"Designing systems that make businesses run"},
+    {i:"🏗️",n:"Project / programme manager",w:"Turning strategy into reliable execution"},
+    {i:"📋",n:"Compliance / risk officer",w:"Building governance in high-stakes environments"},
+    {i:"💼",n:"Management consultant",w:"Diagnosing and fixing how organizations work"},
+    {i:"🔩",n:"Systems / DevOps engineer",w:"Making complex technical systems reliable"},
+    {i:"📦",n:"Supply chain director",w:"Coordinating global complexity at scale"}
+  ]},
+  enterprising:{ico:"🚀",tit:"The Builder",typ:"Enterprising · Ambitious · Momentum-driven",
+  desc:"You are oriented toward impact at scale. You want to build, own, and grow — whether that's a company, a team, a movement, or a product. You feel most alive when something meaningful is on the line and the path is unclear. You're a natural leader in ambiguous environments. Your growth edge: slowing down to invest in depth and relationships — the most effective builders eventually have to learn to listen.",
+  about:"Dominant in enterprising drive. You bias toward action, ownership, and scale. You see opportunity where others see risk.",
+  careers:[
+    {i:"💡",n:"Founder / entrepreneur",w:"Building from zero requires this exact profile"},
+    {i:"🌍",n:"Business development",w:"Opening new markets and relationships at scale"},
+    {i:"📈",n:"Venture capitalist",w:"Identifying and backing the next builders"},
+    {i:"🏢",n:"General manager / P&L owner",w:"Full ownership of business performance"},
+    {i:"🎯",n:"Growth lead",w:"Making products and revenue compound fast"},
+    {i:"🤺",n:"Corporate strategy / M&A",w:"Shaping organizational direction at the top"}
+  ]}
+};
+
+const TC={analytical:"#2563eb",creative:"#db2777",social:"#059669",structured:"#7c3aed",enterprising:"#d97706"};
+const DN={analytical:"Analytical",creative:"Creative",social:"Social",structured:"Structured",enterprising:"Enterprising"};
+
+let cQ=0, ans={};
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+
+function startTest(){ show('sQ'); renderQ(); }
+
+function renderQ(){
+  const q=Qs[cQ];
+  document.getElementById('qSec').textContent=q.s;
+  document.getElementById('qCnt').textContent='Question '+(cQ+1)+' of '+Qs.length;
+  document.getElementById('qTxt').textContent=q.t;
+  const g=document.getElementById('qOpts');
+  g.innerHTML='';
+  q.o.forEach((o,i)=>{
+    const b=document.createElement('button');
+    b.className='opt'+(ans[cQ]===i?' sel':'');
+    b.innerHTML='<div class="opt-l">'+o.l+'</div><div><div class="opt-t">'+o.ti+'</div><div class="opt-d">'+o.d+'</div></div>';
+    b.onclick=()=>pick(i);
+    g.appendChild(b);
+  });
+  document.getElementById('bBack').disabled=(cQ===0);
+  document.getElementById('bNext').disabled=(ans[cQ]===undefined);
+  document.getElementById('pb').style.width=(cQ/Qs.length*100)+'%';
+}
+
+function pick(i){
+  ans[cQ]=i;
+  document.querySelectorAll('.opt').forEach((b,idx)=>b.classList.toggle('sel',idx===i));
+  document.getElementById('bNext').disabled=false;
+}
+
+function goNext(){
+  if(ans[cQ]===undefined)return;
+  if(cQ<Qs.length-1){ cQ++; renderQ(); }
+  else showRes();
+}
+
+function goBack(){ if(cQ>0){ cQ--; renderQ(); } }
+
+function calcScores(){
+  const sc={analytical:0,creative:0,social:0,structured:0,enterprising:0};
+  for(let q in ans){
+    const o=Qs[q].o[ans[q]];
+    for(const[k,v]of Object.entries(o.sc)) sc[k]+=v;
+  }
+  return sc;
+}
+
+function showRes(){
+  const sc=calcScores();
+  const sorted=Object.entries(sc).sort((a,b)=>b[1]-a[1]);
+  const dom=sorted[0][0];
+  const p=PROFS[dom];
+
+  document.getElementById('rIco').textContent=p.ico;
+  document.getElementById('rTit').textContent=p.tit;
+  document.getElementById('rTyp').textContent=p.typ;
+  document.getElementById('rDesc').textContent=p.desc;
+
+  // Trait bars
+  const mx=60;
+  const tb=document.getElementById('tBars');
+  tb.innerHTML='';
+  for(const[d,lb]of Object.entries(DN)){
+    const pct=Math.min(100,Math.round((sc[d]/mx)*100));
+    tb.innerHTML+=`<div class="trait-row">
+      <span class="trait-lbl">${lb}</span>
+      <div class="trait-out"><div class="trait-fill" id="b${d}" style="width:0%;background:${TC[d]}"></div></div>
+      <span class="trait-pct">${pct}%</span>
+    </div>`;
+  }
+
+  // Career cards
+  const cc=document.getElementById('cCards');
+  cc.innerHTML='';
+  p.careers.forEach(c=>{
+    cc.innerHTML+=`<div class="career-card"><div class="c-ico">${c.i}</div><div class="c-name">${c.n}</div><div class="c-why">${c.w}</div></div>`;
+  });
+
+  // Secondary profiles (2nd and 3rd highest)
+  const sp=document.getElementById('secProfs');
+  sp.innerHTML='';
+  sorted.slice(1,3).forEach(([dim])=>{
+    const pp=PROFS[dim];
+    sp.innerHTML+=`<div class="secondary-block">
+      <div class="sec-prof-title">${pp.ico} ${pp.tit} <span style="font-size:12px;font-weight:400;color:#999">— secondary</span></div>
+      <div class="sec-prof-sub">${pp.about}</div>
+    </div>`;
+  });
+
+  show('sRes');
+  document.getElementById('pb').style.width='100%';
+
+  setTimeout(()=>{
+    for(const[d]of Object.entries(DN)){
+      const pct=Math.min(100,Math.round((sc[d]/mx)*100));
+      const bar=document.getElementById('b'+d);
+      if(bar) bar.style.width=pct+'%';
+    }
+  },120);
+}
+
+function retake(){
+  cQ=0; ans={};
+  show('sIntro');
+  document.getElementById('pb').style.width='0%';
+}
+
+function printRes(){ window.print(); }
+</script>
+</body>
+</html>
